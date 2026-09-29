@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gestiones</title>
+<meta name="description" content="Registro de dinero ganado por sesión">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<style>
+:root{--bg:#f2f3f8;--card:#fff;--ink:#14162e;--muted:#6a6f8a;--line:#e6e8f2;--brand:#3b3fd8;--gold:#ffb547;--ok:#0f9d75;--bad:#e5484d;--r:18px}
+@media (prefers-color-scheme:dark){:root{--bg:#0b0c1a;--card:#14162b;--ink:#eef0ff;--muted:#8e93b3;--line:#24274a;--brand:#7c82ff;--ok:#34d3a0;--bad:#ff7a7f}}
+*{box-sizing:border-box}[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:ui-rounded,'SF Pro Rounded',system-ui,-apple-system,'Segoe UI',sans-serif;-webkit-font-smoothing:antialiased}
+main{max-width:720px;margin:0 auto;padding:20px 16px 72px;display:grid;gap:14px}
+h1{font-size:1.25rem;margin:0;letter-spacing:-.02em}h2{font-size:.95rem;margin:0;font-weight:600;text-transform:capitalize}
+.muted{color:var(--muted);font-size:.85rem}
+.num{font-variant-numeric:tabular-nums;letter-spacing:-.03em;font-weight:700}
+.top,.head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px}
+.hero{background:linear-gradient(140deg,#262a8f,#14162e 70%);color:#fff;padding:22px;display:grid;gap:14px;border-radius:var(--r)}
+.hero .muted{color:#b9bdf0}.hero .big{font-size:2.6rem;line-height:1.05;display:block;margin-top:6px}
+.gain{color:var(--gold)}.hero .loss{color:#ff9aa0}
+input{width:100%;padding:14px 16px;border-radius:14px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;font-size:1.05rem}
+.hero input{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.22);color:#fff}.hero input::placeholder{color:#9fa4de}
+input:focus-visible,button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+button{font:inherit;font-weight:700;padding:14px 18px;border:0;border-radius:14px;background:var(--brand);color:#fff;cursor:pointer;transition:transform .12s}
+button:active{transform:scale(.98)}button:disabled{opacity:.5}
+.hero #accion{background:var(--gold);color:#14162e}
+button.ghost{background:transparent;color:var(--muted);border:1px solid var(--line);font-weight:500;padding:8px 12px;font-size:.85rem}
+.nav{display:flex;gap:6px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:14px}
+.stat{background:var(--bg);border-radius:14px;padding:12px}.stat .num{font-size:1.25rem;display:block;margin-top:4px}
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:14px}
+.day{padding:8px 0;border-radius:12px;background:var(--bg);color:var(--ink);font-weight:500;font-size:.8rem;display:grid;gap:2px;justify-items:center;border:2px solid transparent}
+.day small{font-size:.62rem;color:var(--muted);min-height:.8em}
+.day.on{background:color-mix(in srgb,var(--ok) 16%,var(--bg))}.day.on small{color:var(--ok)}.day.sel{border-color:var(--brand)}
+.list{display:grid;gap:8px;margin-top:12px}
+.item{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px;border-radius:14px;background:var(--bg)}
+.item .num{font-size:1.05rem;margin-left:auto}
+.pos{color:var(--ok)}.neg{color:var(--bad)}
+.err{color:var(--bad);font-size:.9rem;margin:0}
+.auth{max-width:380px;margin:12vh auto 0;display:grid;gap:12px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+const SUPABASE_URL = 'https://soizfreqyjwishczfrmc.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNvaXpmcmVxeWp3aXNoY3pmcm1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwNDExNjcsImV4cCI6MjA5ODYxNzE2N30.K_Dm_lOpPaSYqBaKmC3yDjKFGNVw75DCGczo_yJ3ZzE';
+const T = 'gestiones_sesiones';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const clp = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 });
+const miles = new Intl.NumberFormat('es-CL');
+const money = (n) => (n == null ? '—' : (n > 0 ? '+' : '') + clp.format(n));
+const num = (v) => { const d = String(v).replace(/\D/g, ''); return d === '' ? null : parseInt(d, 10); };
+const dk = (d) => new Date(d).toLocaleDateString('en-CA');
+const hora = (iso) => (iso ? new Date(iso).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }) : '…');
+const cls = (n) => (n > 0 ? 'pos' : n < 0 ? 'neg' : '');
+const shift = (m, d) => { const [y, mo] = m.split('-').map(Number); return dk(new Date(y, mo - 1 + d, 1)).slice(0, 7); };
+
+let user = null, rows = [], mes = dk(new Date()).slice(0, 7), dia = dk(new Date());
+
+sb.auth.getSession().then(({ data }) => route(data.session?.user ?? null));
+sb.auth.onAuthStateChange((_e, s) => { const u = s?.user ?? null; if ((u?.id ?? null) !== (user?.id ?? null)) route(u); });
+
+function route(u) { user = u; u ? panel() : auth(); }
+
+function auth() {
+  let crear = false;
+  $('#app').innerHTML = `<main><form class="card auth" id="f">
+    <h1>Gestiones</h1><p class="muted" id="sub"></p>
+    <input type="email" id="em" placeholder="Correo" required>
+    <input type="password" id="pw" placeholder="Contraseña" required minlength="6">
+    <button id="go"></button><p class="err" id="msg"></p>
+    <button type="button" class="ghost" id="sw"></button></form></main>`;
+  const pintar = () => {
+    $('#sub').textContent = crear ? 'Crea tu cuenta para guardar tus sesiones.' : 'Ingresa para ver tus sesiones.';
+    $('#go').textContent = crear ? 'Crear cuenta' : 'Entrar';
+    $('#sw').textContent = crear ? 'Ya tengo cuenta' : 'No tengo cuenta';
+  };
+  pintar();
+  $('#sw').onclick = () => { crear = !crear; pintar(); };
+  $('#f').onsubmit = async (e) => {
+    e.preventDefault(); $('#go').disabled = true; $('#msg').textContent = '';
+    const cred = { email: $('#em').value, password: $('#pw').value };
+    const { data, error } = crear ? await sb.auth.signUp(cred) : await sb.auth.signInWithPassword(cred);
+    if (error) $('#msg').textContent = error.message;
+    else if (crear && !data.session) $('#msg').textContent = 'Te enviamos un correo para confirmar tu cuenta.';
+    $('#go').disabled = false;
+  };
+}
+
+function panel() {
+  $('#app').innerHTML = `<main>
+    <div class="top"><h1>Gestiones</h1><button class="ghost" id="salir">Salir</button></div>
+    <section class="hero">
+      <div><span class="muted" id="meta"></span><span class="big num" id="big"></span></div>
+      <input id="monto" inputmode="numeric" autocomplete="off">
+      <input id="nota" placeholder="Nota (opcional)" hidden>
+      <button id="accion"></button><p class="err" id="err"></p>
+    </section>
+    <section class="card">
+      <div class="head"><h2 id="mtitulo"></h2><div class="nav">
+        <button class="ghost" id="prev" aria-label="Mes anterior">‹</button>
+        <button class="ghost" id="next" aria-label="Mes siguiente">›</button></div></div>
+      <div class="stats" id="stats"></div><div class="days" id="days"></div>
+    </section>
+    <section class="card"><h2 id="dtitulo"></h2><div class="list" id="list"></div></section></main>`;
+  $('#salir').onclick = () => sb.auth.signOut();
+  $('#prev').onclick = () => { mes = shift(mes, -1); pintar(); };
+  $('#next').onclick = () => { mes = shift(mes, 1); pintar(); };
+  $('#monto').oninput = (e) => { const n = num(e.target.value); e.target.value = n == null ? '' : miles.format(n); pintarHero(); };
+  $('#accion').onclick = accion;
+  $('#days').onclick = (e) => { const b = e.target.closest('[data-k]'); if (b) { dia = b.dataset.k; pintar(); } };
+  $('#list').onclick = (e) => { const b = e.target.closest('[data-id]'); if (b) borrar(b.dataset.id); };
+  cargar();
+}
+
+const activa = () => rows.find((r) => !r.terminado_en);
+const setErr = (m) => { $('#err').textContent = m || ''; };
+
+async function cargar() {
+  const { data, error } = await sb.from(T).select('*').order('iniciado_en', { ascending: false }).limit(1000);
+  if (error) setErr(error.message); else rows = data;
+  pintar();
+}
+
+function pintarHero() {
+  const a = activa(), n = num($('#monto').value), big = $('#big');
+  $('#nota').hidden = !a;
+  if (a) {
+    $('#meta').textContent = `En sesión desde las ${hora(a.iniciado_en)} · entraste con ${clp.format(a.contador_inicio)}`;
+    const p = n == null ? null : n - a.contador_inicio;
+    big.textContent = p == null ? '¿Cuánto quedó?' : money(p);
+    big.className = 'big num ' + (p == null ? '' : p < 0 ? 'loss' : 'gain');
+    $('#monto').placeholder = 'Monto con el que quedó';
+    $('#accion').textContent = 'Terminar sesión';
+  } else {
+    $('#meta').textContent = 'Nueva sesión';
+    big.textContent = clp.format(n ?? 0); big.className = 'big num';
+    $('#monto').placeholder = 'Monto con el que entras';
+    $('#accion').textContent = 'Iniciar sesión';
+  }
+}
+
+async function accion() {
+  const a = activa(), n = num($('#monto').value);
+  if (n == null) return setErr(a ? 'Ingresa el monto con el que quedó.' : 'Ingresa el monto con el que entras.');
+  setErr(''); $('#accion').disabled = true;
+  const { error } = a
+    ? await sb.from(T).update({ contador_fin: n, gestiones: n - a.contador_inicio, terminado_en: new Date().toISOString(), nota: $('#nota').value.trim() || null }).eq('id', a.id)
+    : await sb.from(T).insert({ usuario: user.email, contador_inicio: n });
+  if (error) setErr(error.message); else { $('#monto').value = ''; $('#nota').value = ''; }
+  await cargar(); $('#accion').disabled = false;
+}
+
+async function borrar(id) {
+  if (!confirm('¿Borrar esta sesión?')) return;
+  const { error } = await sb.from(T).delete().eq('id', id);
+  if (error) setErr(error.message);
+  cargar();
+}
+
+function pintar() {
+  pintarHero();
+  const porDia = {};
+  for (const r of rows) if (r.terminado_en) {
+    const k = dk(r.iniciado_en); porDia[k] = porDia[k] || { total: 0, n: 0 };
+    porDia[k].total += r.gestiones ?? 0; porDia[k].n++;
+  }
+  const [y, mo] = mes.split('-').map(Number);
+  const ndias = new Date(y, mo, 0).getDate(), offset = (new Date(y, mo - 1, 1).getDay() + 6) % 7;
+  const delMes = Object.entries(porDia).filter(([k]) => k.startsWith(mes));
+  const total = delMes.reduce((a, [, v]) => a + v.total, 0);
+  const ses = delMes.reduce((a, [, v]) => a + v.n, 0);
+  const prom = delMes.length ? Math.round(total / delMes.length) : 0;
+  const mejor = delMes.reduce((b, [, v]) => (b == null || v.total > b ? v.total : b), null);
+  $('#mtitulo').textContent = new Date(y, mo - 1, 1).toLocaleDateString('es-CL', { month: 'long', year: 'numeric' });
+  $('#stats').innerHTML = `
+    <div class="stat"><span class="muted">Ganado en el mes</span><span class="num ${cls(total)}">${money(total)}</span></div>
+    <div class="stat"><span class="muted">Promedio por día</span><span class="num">${money(prom)}</span></div>
+    <div class="stat"><span class="muted">Mejor día</span><span class="num">${mejor == null ? '—' : money(mejor)}</span></div>
+    <div class="stat"><span class="muted">Sesiones</span><span class="num">${ses}</span></div>`;
+  let d = '<span></span>'.repeat(offset);
+  for (let i = 1; i <= ndias; i++) {
+    const k = `${mes}-${String(i).padStart(2, '0')}`, v = porDia[k];
+    d += `<button class="day ${v ? 'on' : ''} ${k === dia ? 'sel' : ''}" data-k="${k}" style="font-weight:500">${i}<small>${v ? miles.format(Math.round(v.total / 1000)) + 'k' : ''}</small></button>`;
+  }
+  $('#days').innerHTML = d;
+  $('#dtitulo').textContent = `${dia.split('-').reverse().join('/')} · ${money(porDia[dia]?.total ?? 0)}`;
+  const delDia = rows.filter((r) => dk(r.iniciado_en) === dia);
+  $('#list').innerHTML = delDia.length ? delDia.map((s) => `
+    <div class="item"><div>
+      <div class="muted">${hora(s.iniciado_en)} – ${hora(s.terminado_en)}</div>
+      <div class="muted">${clp.format(s.contador_inicio)} → ${s.contador_fin == null ? '…' : clp.format(s.contador_fin)}</div>
+      ${s.nota ? `<div class="muted">${esc(s.nota)}</div>` : ''}</div>
+      <span class="num ${cls(s.gestiones)}">${s.terminado_en ? money(s.gestiones) : 'En curso'}</span>
+      <button class="ghost" data-id="${esc(s.id)}" aria-label="Borrar sesión">✕</button></div>`).join('')
+    : '<p class="muted">Sin sesiones este día.</p>';
+}
+</script>
+</body>
+</html>
