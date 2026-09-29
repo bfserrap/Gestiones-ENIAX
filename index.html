@@ -151,8 +151,7 @@ async function accion() {
   if (n == null) return setErr(a ? 'Ingresa el monto con el que quedó.' : 'Ingresa el monto con el que entras.');
   setErr(''); $('#accion').disabled = true;
   const { error } = a
-    ? await sb.from(T).update({ contador_fin: n, gestiones: n - a.contador_inicio, terminado_en: new Date().toISOString(), nota: $('#nota').value.trim() || null }).eq('id', a.id)
-    : await sb.from(T).insert({ usuario: user.email, contador_inicio: n });
+? await sb.from(T).update({ contador_fin: n, terminado_en: new Date().toISOString(), nota: $('#nota').value.trim() || null }).eq('id', a.id)    : await sb.from(T).insert({ usuario: user.email, contador_inicio: n });
   if (error) setErr(error.message); else { $('#monto').value = ''; $('#nota').value = ''; }
   await cargar(); $('#accion').disabled = false;
 }
