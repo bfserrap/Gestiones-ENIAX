@@ -59,13 +59,35 @@ button.ghost{background:transparent;color:var(--muted);border:1.5px solid var(--
 .pos{color:var(--ok)}.neg{color:var(--bad)}
 .err{color:#ffd0dc;font-size:.85rem;margin:0}.card .err{color:var(--bad)}
 .auth{max-width:400px;margin:10vh auto 0;display:grid;gap:12px}
+
+/* Rediseño adaptable: paneles limpios, mejor jerarquía y gráfico con altura limitada */
+:root{--bg:#f5f7fb;--card:#fff;--ink:#172033;--muted:#718096;--line:#e5eaf2;--soft:#f3f6fa;--v:#4f46e5;--mint:#14b88a;--ok:#078763;--bad:#dc4768;--r:20px;--sh:0 8px 30px rgba(24,39,75,.07)}
+@media(prefers-color-scheme:dark){:root{--bg:#101522;--card:#181f2e;--ink:#f2f5fb;--muted:#a1acc0;--line:#2b3547;--soft:#202a3a;--v:#9a91ff;--mint:#35d6a4;--ok:#5fe0b3;--bad:#ff7894;--sh:0 10px 32px rgba(0,0,0,.22)}}
+body{background:var(--bg);font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+main{max-width:1120px;padding:34px 28px 64px;gap:22px;grid-template-columns:minmax(0,1fr) minmax(340px,.9fr);align-items:start}
+.top{grid-column:1/-1;padding:0 2px 4px}.top h1{font-size:1.4rem}.top h1:before{background:linear-gradient(135deg,#4f46e5,#818cf8);border-radius:10px;box-shadow:none}
+.card{padding:26px;border:1px solid var(--line);border-radius:20px;box-shadow:var(--sh)}
+.hero{grid-column:1;grid-row:2;min-height:100%;padding:30px;border-radius:24px;gap:16px;color:#fff;background:linear-gradient(145deg,#252f49,#172033 70%);box-shadow:0 18px 42px rgba(30,41,69,.18)}
+.hero .chip{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.12)}.hero .big{font-size:clamp(2rem,4vw,3.3rem);overflow-wrap:anywhere}.hero input{border-radius:13px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18)}.hero #accion{background:#fff;color:#202b43;border-radius:13px;box-shadow:none}
+main>section.card:not(:last-child){grid-column:2;grid-row:2}.card:last-child{grid-column:1/-1}
+.head h2{font-size:1.12rem}.nav{flex-shrink:0}.nav button{width:40px;height:40px;padding:0;font-size:1.2rem;background:var(--soft);border:1px solid var(--line);color:var(--ink)}
+.modes{margin-top:18px}.modes button{border-radius:11px;padding:10px 14px}.modes button.active{background:var(--v);color:#fff;border-color:var(--v)}
+.rangebox input{min-width:0;border-radius:11px;background:var(--soft)}.total{font-size:clamp(2rem,4vw,2.7rem)}.stat{border:1px solid var(--line);border-radius:13px;padding:13px 14px}.stat .muted{font-size:.7rem}
+.bars{height:86px!important;min-height:86px;max-height:86px;overflow:hidden;align-items:flex-end;gap:5px;padding:0 2px;margin-top:22px;border-bottom:1px solid var(--line)}
+.bar{appearance:none!important;-webkit-appearance:none;box-shadow:none!important;outline:none;flex:1 1 0;min-width:0;width:auto;height:100%!important;min-height:0!important;max-height:100%;padding:0!important;margin:0;border:0!important;border-radius:4px 4px 0 0!important;background:transparent!important;display:flex;align-items:flex-end;justify-content:center;overflow:hidden}
+.bar i{height:var(--bar-height,4px)!important;max-height:100%;min-height:3px;width:100%;border-radius:4px 4px 0 0;background:var(--line)}
+.bar.on i{background:#16a879}.bar.neg i{background:#e85e78}.bar.sel i{outline:2px solid var(--v);outline-offset:-2px}
+.days{gap:7px;margin-top:14px}.day{min-height:50px;padding:7px 2px;border-radius:11px;background:var(--soft);font-size:.78rem}.day.on{background:color-mix(in srgb,var(--mint) 14%,var(--soft))}.day.sel{border-color:var(--v)}
+.item{border:1px solid var(--line);border-radius:13px;padding:14px}.ghost{border-radius:11px}
+@media(max-width:760px){main{max-width:620px;padding:22px 16px 40px;grid-template-columns:minmax(0,1fr);gap:16px}.top,.hero,main>section.card:not(:last-child),.card:last-child{grid-column:1;grid-row:auto}.hero{min-height:auto;padding:23px}.card{padding:20px}.bars{height:72px!important;min-height:72px;max-height:72px}.days{gap:5px}.day{min-height:46px}}
+@media(max-width:420px){main{padding:16px 12px 30px;gap:13px}.hero,.card{padding:17px;border-radius:17px}.hero .big{font-size:2rem}.chip{font-size:.68rem;padding:6px 9px}.rangebox{gap:8px}.rangebox label{font-size:.7rem}.rangebox input{font-size:.82rem;padding:10px 8px}.stats{gap:6px}.stat{min-width:calc(50% - 6px);padding:10px}.days{gap:4px}.day{min-height:42px;font-size:.73rem}.day small{font-size:.55rem}.item{gap:8px;flex-wrap:wrap}.item .num{font-size:.95rem}}
 </style>
 </head>
 <body>
 <div id="app"></div>
 <script>
 const SUPABASE_URL = 'https://soizfreqyjwishczfrmc.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNvaXpmcmVxeWp3aXNoY3pmcm1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwNDExNjcsImV4cCI6MjA5ODYxNzE2N30.K_Dm_lOpPaSYqBaKmC3yDjKFGNVw75DCGczo_yJ3ZzE';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJIUzI1NiIsInR5cCI6MTc4MzA0MTExNjcsImV4cCI6MjA5ODYxNzE2N30.K_Dm_lOpPaSYqBaKmC3yDjKFGNVw75DCGczo_yJ3ZzE';
 const T = 'gestiones_sesiones';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -244,7 +266,7 @@ function pintar() {
   for (let i = 1; i <= ndias; i++) {
     const k = `${mes}-${String(i).padStart(2, '0')}`, v = porDia[k], dentro = k >= inicio && k <= fin;
     const h = v ? Math.max(6, Math.round(Math.abs(v.total) / max * 100)) : 4;
-    b += `<button class="bar ${v ? (v.total < 0 ? 'neg' : 'on') : ''} ${k === dia ? 'sel' : ''}" data-k="${k}" title="${i}: ${v ? money(v.total) : 'sin sesiones'}" aria-label="Día ${i}"><i style="height:${h}%"></i></button>`;
+    b += `<button class="bar ${v ? (v.total < 0 ? 'neg' : 'on') : ''} ${k === dia ? 'sel' : ''}" data-k="${k}" title="${i}: ${v ? money(v.total) : 'sin sesiones'}" aria-label="Día ${i}"><i style="--bar-height:${Math.min(86, Math.max(4, Math.round(h * .82)))}px"></i></button>`;
     d += `<button class="day ${v ? 'on' : ''} ${k === dia ? 'sel' : ''}" data-k="${k}" style="${dentro ? '' : 'opacity:.45'}">${i}<small>${v ? miles.format(Math.round(v.total / 1000)) + 'k' : ''}</small></button>`;
   }
   $('#bars').innerHTML = b; $('#days').innerHTML = d;
