@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#5b21b6">
+<title>Gestiones</title>
+<meta name="description" content="Registro de dinero ganado por sesión">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<style>
+:root{color-scheme:light;--bg:#f5f7fb;--surface:#fff;--ink:#172033;--muted:#78859a;--line:#e6ebf2;--soft:#f4f6fa;--brand:#635bff;--brand-dark:#4a43d9;--mint:#20c997;--ok:#07966b;--bad:#e45470;--navy:#171d33;--shadow:0 16px 45px rgba(30,45,80,.08);--radius:24px}
+@media(prefers-color-scheme:dark){:root{color-scheme:dark;--bg:#0d1220;--surface:#151c2b;--ink:#edf2fc;--muted:#9aa8bd;--line:#263147;--soft:#1b2536;--brand:#8b83ff;--brand-dark:#7068f4;--ok:#4cddb0;--bad:#ff7d95;--navy:#11182a;--shadow:0 16px 45px rgba(0,0,0,.22)}}
+*{box-sizing:border-box} [hidden]{display:none!important}
+html{scroll-behavior:smooth}
+body{margin:0;background:radial-gradient(ellipse at 8% 0%,rgba(99,91,255,.08),transparent 34%),var(--bg);color:var(--ink);font-family:'DM Sans',system-ui,-apple-system,'Segoe UI',sans-serif;-webkit-font-smoothing:antialiased}
+main{max-width:1440px;margin:0 auto;padding:30px 42px 72px;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(440px,.95fr);align-items:start;gap:24px}
+h1,h2{font-family:Manrope,'DM Sans',sans-serif;letter-spacing:-.045em}
+h1{font-size:1.45rem;margin:0;font-weight:800;display:flex;align-items:center;gap:12px}
+h1:before{content:"";width:38px;height:38px;border-radius:13px;background:linear-gradient(145deg,#7b72ff,#5b52e8 54%,#44d9bd);box-shadow:0 8px 18px rgba(99,91,255,.26)}
+h2{font-size:1.08rem;margin:0;font-weight:800}
+.muted{color:var(--muted);font-size:.84rem}.num{font-variant-numeric:tabular-nums;letter-spacing:-.045em;font-weight:800}
+.top,.head{display:flex;justify-content:space-between;align-items:center;gap:12px}.top{grid-column:1/-1;padding:0 2px 5px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:28px;box-shadow:var(--shadow)}
+.hero{grid-column:1;grid-row:2;align-self:start;align-content:start;min-height:0;position:relative;overflow:hidden;color:#fff;padding:34px;border-radius:28px;display:grid;grid-auto-rows:max-content;gap:17px;background:radial-gradient(circle at 100% 0%,rgba(105,95,255,.65),transparent 36%),radial-gradient(circle at 0% 100%,rgba(39,203,172,.28),transparent 38%),linear-gradient(145deg,#202947,#151b30 72%);box-shadow:0 24px 60px rgba(32,41,71,.2)}
+.hero:after{content:"";position:absolute;width:210px;height:210px;right:-92px;bottom:-125px;border:1px solid rgba(255,255,255,.13);border-radius:50%;box-shadow:0 0 0 24px rgba(255,255,255,.025),0 0 0 50px rgba(255,255,255,.025);pointer-events:none}
+.hero>div,.hero input,.hero button,.hero .err{position:relative;z-index:1}
+.hero .big{font-family:Manrope,sans-serif;font-size:clamp(2.5rem,5vw,4rem);line-height:1.05;display:block;margin-top:24px;overflow-wrap:anywhere}
+.hero .chip{display:inline-flex;align-items:center;gap:8px;max-width:100%;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.14);padding:8px 13px;border-radius:99px;font-size:.78rem;font-weight:600;backdrop-filter:blur(8px)}
+.dot{flex:0 0 8px;width:8px;height:8px;border-radius:50%;background:#62edc5;animation:pulse 1.8s infinite}
+@keyframes pulse{70%{box-shadow:0 0 0 8px transparent}100%{box-shadow:0 0 0 0 transparent}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+.gain{color:#72f1c9}.hero .loss{color:#ffb4c2}
+input{width:100%;min-width:0;height:56px;padding:13px 16px;border-radius:15px;border:1px solid var(--line);background:var(--soft);color:var(--ink);font:inherit;font-size:1rem;font-weight:600;transition:border-color .18s,box-shadow .18s,background .18s}
+input:focus{outline:0;border-color:var(--brand);box-shadow:0 0 0 4px color-mix(in srgb,var(--brand) 16%,transparent)}
+.hero input{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.17);color:#fff}.hero input::placeholder{color:rgba(255,255,255,.62)}
+button{font:inherit;font-weight:700;padding:11px 16px;min-height:44px;border:0;border-radius:14px;background:linear-gradient(135deg,var(--brand),#8a5cff);color:#fff;cursor:pointer;transition:transform .18s cubic-bezier(.2,.8,.2,1),box-shadow .18s,filter .18s,background .18s;box-shadow:0 8px 18px rgba(99,91,255,.17)}
+button:hover{filter:brightness(1.045);transform:translateY(-2px);box-shadow:0 12px 24px rgba(99,91,255,.23)}button:active{transform:translateY(1px) scale(.985)}button:disabled{opacity:.55;cursor:wait;transform:none}
+button:focus-visible{outline:3px solid #ffd166;outline-offset:3px}
+.hero #accion{background:linear-gradient(135deg,#fff,#edf0ff);color:#282c54;box-shadow:0 10px 25px rgba(0,0,0,.15);font-weight:800;padding:13px 16px;min-height:50px}
+button.ghost{background:var(--surface);color:var(--muted);border:1px solid var(--line);font-weight:700;padding:9px 14px;font-size:.84rem;box-shadow:none}
+button.ghost:hover{color:var(--brand);border-color:color-mix(in srgb,var(--brand) 40%,var(--line));box-shadow:0 6px 14px rgba(30,45,80,.08)}
+.nav{display:flex;gap:7px;flex-shrink:0}.nav button{width:40px;height:40px;padding:0;font-size:1.2rem}
+main>section.card:not(:last-child){grid-column:2;grid-row:2}.card:last-child{grid-column:1/-1}
+.head h2{font-size:1.16rem}.total{display:block;font-family:Manrope,sans-serif;font-size:clamp(2.4rem,4.5vw,3.2rem);margin:7px 0 3px;animation:count-pop .42s cubic-bezier(.2,.8,.2,1) both}
+@keyframes count-pop{from{opacity:.45;transform:translateY(7px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+.hero .big{transition:color .2s,transform .25s cubic-bezier(.2,.8,.2,1)}
+.hero .big:hover{transform:translateY(-2px)}
+.rangebox{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:17px 0 10px}.rangebox label{display:grid;gap:7px;color:var(--muted);font-size:.76rem;font-weight:700}.rangebox input{height:44px;padding:10px 12px;font-size:.9rem;border-radius:12px}
+.modes{display:flex;gap:9px;flex-wrap:wrap;margin-top:17px}.modes button{border-radius:12px;padding:10px 14px}.modes button.active{background:var(--brand);color:#fff;border-color:var(--brand);box-shadow:0 8px 18px rgba(99,91,255,.2)}.period-note{margin:8px 0 0}
+.stats{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}.stat{background:var(--soft);border:1px solid var(--line);border-radius:15px;padding:13px 14px;flex:1;min-width:105px}.stat .muted{font-size:.72rem}.stat .num{font-size:1rem;display:block;margin-top:5px}
+.bars{display:flex;align-items:flex-end;gap:5px;height:88px;min-height:88px;max-height:88px;overflow:hidden;padding:0 2px;margin-top:23px;border-bottom:1px solid var(--line)}
+.bar{appearance:none;-webkit-appearance:none;box-shadow:none;outline:none;flex:1 1 0;min-width:0;width:auto;height:100%;min-height:0;padding:0;margin:0;border:0;border-radius:5px 5px 0 0;background:transparent;display:flex;align-items:flex-end;justify-content:center;overflow:hidden}
+.bar:hover{transform:translateY(-2px);box-shadow:none}.bar i{height:var(--bar-height,4px);max-height:100%;min-height:3px;width:100%;border-radius:5px 5px 0 0;background:var(--line);transition:height .3s ease,filter .2s;transform-origin:bottom;animation:bar-rise .62s cubic-bezier(.22,.8,.24,1) both}
+@keyframes bar-rise{from{transform:scaleY(.08);opacity:.4}to{transform:scaleY(1);opacity:1}}
+.bar:nth-child(3n) i{animation-delay:.04s}.bar:nth-child(3n + 1) i{animation-delay:.08s}.bar:nth-child(3n + 2) i{animation-delay:.12s}
+.bar.on i{background:linear-gradient(180deg,#41dfb5,#0b9b78)}.bar.neg i{background:linear-gradient(180deg,#ff9aa9,#e45470)}.bar.sel i{outline:2px solid var(--brand);outline-offset:-2px}
+.days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px;margin-top:15px}.day{min-height:52px;padding:7px 2px;border-radius:12px;background:var(--soft);color:var(--ink);font-weight:700;font-size:.78rem;display:grid;gap:2px;justify-items:center;border:1.5px solid transparent;box-shadow:none;transition:background .16s,border-color .16s,transform .16s}
+.day:hover{transform:translateY(-2px);background:color-mix(in srgb,var(--brand) 8%,var(--soft));box-shadow:none}.day small{font-size:.58rem;color:var(--muted);min-height:.8em;font-weight:700}.day.on{background:color-mix(in srgb,#20c997 14%,var(--soft))}.day.on small{color:var(--ok)}.day.sel{border-color:var(--brand);background:color-mix(in srgb,var(--brand) 9%,var(--soft))}
+.list{display:grid;gap:9px;margin-top:16px}.item{display:flex;align-items:center;gap:13px;padding:15px;border-radius:15px;background:var(--soft);border:1px solid var(--line);transition:transform .16s,border-color .16s}.item:hover{transform:translateY(-1px);border-color:color-mix(in srgb,var(--brand) 28%,var(--line))}.item .num{font-size:1.05rem;margin-left:auto}.pos{color:var(--ok)}.neg{color:var(--bad)}
+.err{color:#ff91a4;font-size:.85rem;margin:0}.card .err{color:var(--bad)}.auth{max-width:440px;margin:10vh auto 0;display:grid;gap:14px}
+@media(max-width:980px){main{max-width:760px;padding:26px 20px 48px;grid-template-columns:minmax(0,1fr);gap:17px}.top,.hero,main>section.card:not(:last-child),.card:last-child{grid-column:1;grid-row:auto}.hero{min-height:0;align-content:start;padding:28px}.card{padding:23px}.bars{height:78px;min-height:78px;max-height:78px}}
+@media(max-width:480px){main{padding:16px 12px 32px;gap:13px}.top h1{font-size:1.25rem}.top h1:before{width:33px;height:33px}.hero,.card{padding:19px;border-radius:20px}.hero{gap:13px}.hero .big{font-size:2.35rem;margin-top:20px}.hero .chip{font-size:.69rem;padding:7px 10px;line-height:1.35}.head h2{font-size:1rem}.nav button{width:36px;height:36px}.modes{gap:7px}.modes button{font-size:.78rem;padding:10px 11px}.rangebox{gap:8px}.rangebox label{font-size:.7rem}.rangebox input{height:42px;font-size:.8rem;padding:9px 8px}.stats{gap:6px}.stat{min-width:calc(50% - 6px);padding:11px}.stat .muted{font-size:.66rem}.stat .num{font-size:.92rem}.bars{height:66px;min-height:66px;max-height:66px;gap:3px;margin-top:18px}.days{gap:4px}.day{min-height:44px;font-size:.72rem;border-radius:10px}.day small{font-size:.53rem}.item{gap:9px;flex-wrap:wrap;padding:12px}.item .num{font-size:.94rem}.total{font-size:2.35rem}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+const SUPABASE_URL = 'https://soizfreqyjwishczfrmc.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNvaXpmcmVxeWp3aXNoY3pmcm1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwNDExNjcsImV4cCI6MjA5ODYxNzE2N30.K_Dm_lOpPaSYqBaKmC3yDjKFGNVw75DCGczo_yJ3ZzE';
+const T = 'gestiones_sesiones';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const clp = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 });
+const miles = new Intl.NumberFormat('es-CL');
+const money = (n) => (n == null ? '—' : (n > 0 ? '+' : '') + clp.format(n));
+const num = (v) => { const d = String(v).replace(/\D/g, ''); return d === '' ? null : parseInt(d, 10); };
+const dk = (d) => new Date(d).toLocaleDateString('en-CA');
+const hora = (iso) => (iso ? new Date(iso).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }) : '…');
+const cls = (n) => (n > 0 ? 'pos' : n < 0 ? 'neg' : '');
+const shift = (m, d) => { const [y, mo] = m.split('-').map(Number); return dk(new Date(y, mo - 1 + d, 1)).slice(0, 7); };
+
+let user = null, rows = [], mes = dk(new Date()).slice(0, 7), dia = dk(new Date());
+let modo = 'ciclo', desde = '', hasta = '';
+function cicloActual(hoy = new Date()) {
+  const d = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+  const ini = new Date(d.getFullYear(), d.getMonth() - (d.getDate() < 26 ? 1 : 0), 26);
+  const fin = new Date(ini.getFullYear(), ini.getMonth() + 1, 25);
+  return [dk(ini), dk(fin)];
+}
+
+sb.auth.getSession().then(({ data }) => route(data.session?.user ?? null));
+sb.auth.onAuthStateChange((_e, s) => { const u = s?.user ?? null; if ((u?.id ?? null) !== (user?.id ?? null)) route(u); });
+
+function route(u) { user = u; u ? panel() : auth(); }
+
+function auth() {
+  let crear = false;
+  $('#app').innerHTML = `<main><form class="card auth" id="f">
+    <h1>Gestiones</h1><p class="muted" id="sub"></p>
+    <input type="email" id="em" placeholder="Correo" required>
+    <input type="password" id="pw" placeholder="Contraseña" required minlength="6">
+    <button id="go"></button><p class="err" id="msg"></p>
+    <button type="button" class="ghost" id="sw"></button></form></main>`;
+  const pintar = () => {
+    $('#sub').textContent = crear ? 'Crea tu cuenta para guardar tus sesiones.' : 'Ingresa para ver tus sesiones.';
+    $('#go').textContent = crear ? 'Crear cuenta' : 'Entrar';
+    $('#sw').textContent = crear ? 'Ya tengo cuenta' : 'No tengo cuenta';
+  };
+  pintar();
+  $('#sw').onclick = () => { crear = !crear; pintar(); };
+  $('#f').onsubmit = async (e) => {
+    e.preventDefault(); $('#go').disabled = true; $('#msg').textContent = '';
+    const cred = { email: $('#em').value, password: $('#pw').value };
+    const { data, error } = crear ? await sb.auth.signUp(cred) : await sb.auth.signInWithPassword(cred);
+    if (error) $('#msg').textContent = error.message;
+    else if (crear && !data.session) $('#msg').textContent = 'Te enviamos un correo para confirmar tu cuenta.';
+    $('#go').disabled = false;
+  };
+}
+
+function panel() {
+  $('#app').innerHTML = `<main>
+    <div class="top"><h1>Gestiones</h1><button class="ghost" id="salir">Salir</button></div>
+    <section class="hero">
+      <div><span class="chip" id="meta"></span><span class="big num" id="big"></span></div>
+      <input id="monto" inputmode="numeric" autocomplete="off">
+      <input id="nota" placeholder="Nota (opcional)" hidden>
+      <button id="accion"></button><p class="err" id="err"></p>
+    </section>
+    <section class="card">
+      <div class="head"><h2 id="mtitulo"></h2><div class="nav">
+        <button class="ghost" id="prev" aria-label="Mes anterior">‹</button>
+        <button class="ghost" id="next" aria-label="Mes siguiente">›</button></div></div>
+      <div class="modes"><button type="button" class="ghost" id="cicloBtn">Ciclo 26–25</button><button type="button" class="ghost" id="customBtn">Elegir fechas</button></div>
+      <div class="rangebox" id="rangebox" hidden><label>Desde<input type="date" id="desde"></label><label>Hasta<input type="date" id="hasta"></label></div>
+      <p class="muted period-note" id="periodNote"></p>
+      <span class="muted" style="display:block;margin-top:14px">Total del periodo</span>
+      <span class="total num" id="total"></span>
+      <div class="stats" id="stats"></div>
+      <div class="bars" id="bars"></div><div class="days" id="days"></div>
+    </section>
+    <section class="card"><h2 id="dtitulo"></h2><div class="list" id="list"></div></section></main>`;
+  $('#salir').onclick = () => sb.auth.signOut();
+  $('#prev').onclick = () => { mes = shift(mes, -1); pintar(); };
+  $('#next').onclick = () => { mes = shift(mes, 1); pintar(); };
+  $('#cicloBtn').onclick = () => { modo = 'ciclo'; pintar(); };
+  $('#customBtn').onclick = () => { modo = 'custom'; const r = cicloActual(); desde ||= r[0]; hasta ||= r[1]; pintar(); };
+  $('#desde').onchange = (e) => { desde = e.target.value; pintar(); };
+  $('#hasta').onchange = (e) => { hasta = e.target.value; pintar(); };
+  $('#monto').oninput = (e) => { const n = num(e.target.value); e.target.value = n == null ? '' : miles.format(n); pintarHero(); };
+  $('#accion').onclick = accion;
+  const elegir = (e) => { const b = e.target.closest('[data-k]'); if (b) { dia = b.dataset.k; pintar(); } };
+  $('#days').onclick = elegir; $('#bars').onclick = elegir;
+  $('#list').onclick = (e) => { const b = e.target.closest('[data-id]'); if (b) borrar(b.dataset.id); };
+  cargar();
+}
+
+const activa = () => rows.find((r) => !r.terminado_en);
+const setErr = (m) => { $('#err').textContent = m || ''; };
+
+async function cargar() {
+  const { data, error } = await sb.from(T).select('*').order('iniciado_en', { ascending: false }).limit(1000);
+  if (error) setErr(error.message); else rows = data;
+  pintar();
+}
+
+function pintarHero() {
+  const a = activa(), n = num($('#monto').value), big = $('#big');
+  $('#nota').hidden = !a;
+  if (a) {
+    $('#meta').innerHTML = `<span class="dot"></span>En sesión desde las ${hora(a.iniciado_en)} · entraste con ${clp.format(a.contador_inicio)}`;
+    const p = n == null ? null : n - a.contador_inicio;
+    big.textContent = p == null ? '¿Cuánto quedó?' : money(p);
+    big.className = 'big num ' + (p == null ? '' : p < 0 ? 'loss' : 'gain');
+    big.style.fontSize = p == null ? '1.7rem' : '';
+    $('#monto').placeholder = 'Monto con el que quedó';
+    $('#accion').textContent = 'Terminar sesión';
+  } else {
+    $('#meta').textContent = 'Nueva sesión';
+    big.textContent = clp.format(n ?? 0); big.className = 'big num'; big.style.fontSize = '';
+    $('#monto').placeholder = 'Monto con el que entras';
+    $('#accion').textContent = 'Iniciar sesión';
+  }
+}
+
+async function accion() {
+  const a = activa(), n = num($('#monto').value);
+  if (n == null) return setErr(a ? 'Ingresa el monto con el que quedó.' : 'Ingresa el monto con el que entras.');
+  setErr(''); $('#accion').disabled = true;
+  // "gestiones" es una columna calculada en la base (fin - inicio): no se envía.
+  const { error } = a
+    ? await sb.from(T).update({ contador_fin: n, terminado_en: new Date().toISOString(), nota: $('#nota').value.trim() || null }).eq('id', a.id)
+    : await sb.from(T).insert({ usuario: user.email, contador_inicio: n });
+  if (error) setErr(error.message); else { $('#monto').value = ''; $('#nota').value = ''; }
+  await cargar(); $('#accion').disabled = false;
+}
+
+async function borrar(id) {
+  if (!confirm('¿Borrar esta sesión?')) return;
+  const { error } = await sb.from(T).delete().eq('id', id);
+  if (error) setErr(error.message);
+  cargar();
+}
+
+function pintar() {
+  pintarHero();
+  const porDia = {};
+  for (const r of rows) if (r.terminado_en) {
+    const k = dk(r.iniciado_en); porDia[k] = porDia[k] || { total: 0, n: 0 };
+    porDia[k].total += r.gestiones ?? 0; porDia[k].n++;
+  }
+  let inicio, fin;
+  if (modo === 'ciclo') [inicio, fin] = cicloActual();
+  else { inicio = desde; fin = hasta; }
+  $('#rangebox').hidden = modo !== 'custom';
+  $('#desde').value = desde; $('#hasta').value = hasta;
+  $('#cicloBtn').classList.toggle('active', modo === 'ciclo');
+  $('#customBtn').classList.toggle('active', modo === 'custom');
+  if (!inicio || !fin || inicio > fin) {
+    $('#mtitulo').textContent = 'Selecciona un periodo válido';
+    $('#periodNote').textContent = 'La fecha de inicio debe ser anterior o igual a la fecha de término.';
+    $('#total').textContent = money(0); $('#stats').innerHTML = ''; $('#bars').innerHTML = ''; $('#days').innerHTML = '';
+    $('#dtitulo').textContent = ''; $('#list').innerHTML = ''; return;
+  }
+  const elegibles = Object.entries(porDia).filter(([k]) => k >= inicio && k <= fin);
+  const total = elegibles.reduce((a, [, v]) => a + v.total, 0);
+  const ses = elegibles.reduce((a, [, v]) => a + v.n, 0);
+  const prom = elegibles.length ? Math.round(total / elegibles.length) : 0;
+  const mejor = elegibles.reduce((b, [, v]) => (b == null || v.total > b ? v.total : b), null);
+  const max = Math.max(1, ...elegibles.map(([, v]) => Math.abs(v.total)));
+  const fmt = (k) => new Date(k + 'T12:00:00').toLocaleDateString('es-CL', { day: 'numeric', month: 'short', year: 'numeric' });
+  $('#periodNote').textContent = `${fmt(inicio)} — ${fmt(fin)}`;
+  $('#total').textContent = money(total); $('#total').className = 'total num ' + cls(total);
+  $('#stats').innerHTML = `
+    <div class="stat"><span class="muted">Promedio por día activo</span><span class="num">${money(prom)}</span></div>
+    <div class="stat"><span class="muted">Mejor día</span><span class="num">${mejor == null ? '—' : money(mejor)}</span></div>
+    <div class="stat"><span class="muted">Sesiones</span><span class="num">${ses}</span></div>`;
+  // El calendario mensual se mantiene para explorar días; el total y las estadísticas respetan el periodo seleccionado.
+  const [y, mo] = mes.split('-').map(Number);
+  const ndias = new Date(y, mo, 0).getDate(), offset = (new Date(y, mo - 1, 1).getDay() + 6) % 7;
+  $('#mtitulo').textContent = modo === 'ciclo' ? `Ciclo · ${fmt(inicio)} al ${fmt(fin)}` : `Fechas · ${fmt(inicio)} al ${fmt(fin)}`;
+  let b = '', d = '<span></span>'.repeat(offset);
+  for (let i = 1; i <= ndias; i++) {
+    const k = `${mes}-${String(i).padStart(2, '0')}`, v = porDia[k], dentro = k >= inicio && k <= fin;
+    const h = v ? Math.max(6, Math.round(Math.abs(v.total) / max * 100)) : 4;
+    b += `<button class="bar ${v ? (v.total < 0 ? 'neg' : 'on') : ''} ${k === dia ? 'sel' : ''}" data-k="${k}" title="${i}: ${v ? money(v.total) : 'sin sesiones'}" aria-label="Día ${i}"><i style="--bar-height:${Math.min(86, Math.max(4, Math.round(h * .82)))}px"></i></button>`;
+    d += `<button class="day ${v ? 'on' : ''} ${k === dia ? 'sel' : ''}" data-k="${k}" style="${dentro ? '' : 'opacity:.45'}">${i}<small>${v ? miles.format(Math.round(v.total / 1000)) + 'k' : ''}</small></button>`;
+  }
+  $('#bars').innerHTML = b; $('#days').innerHTML = d;
+  $('#dtitulo').textContent = `${fmt(dia)} · ${money(porDia[dia]?.total ?? 0)}`;
+  const delDia = rows.filter((r) => dk(r.iniciado_en) === dia);
+  $('#list').innerHTML = delDia.length ? delDia.map((s) => `
+    <div class="item"><div>
+      <div class="muted">${hora(s.iniciado_en)} – ${hora(s.terminado_en)}</div>
+      <div class="muted">${clp.format(s.contador_inicio)} → ${s.contador_fin == null ? '…' : clp.format(s.contador_fin)}</div>
+      ${s.nota ? `<div class="muted">${esc(s.nota)}</div>` : ''}</div>
+      <span class="num ${cls(s.gestiones)}">${s.terminado_en ? money(s.gestiones) : 'En curso'}</span>
+      <button class="ghost" data-id="${esc(s.id)}" aria-label="Borrar sesión">✕</button></div>`).join('')
+    : '<p class="muted">Sin sesiones este día.</p>';
+}
+</script>
+</body>
+</html>
